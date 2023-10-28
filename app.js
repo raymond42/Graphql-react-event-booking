@@ -4,12 +4,16 @@ import { graphqlHTTP } from "express-graphql";
 import { buildSchema } from "graphql";
 import mongoose from "mongoose";
 import Event from "./models/event.js";
+import User from "./models/user.js";
+import bcrypt from "bcryptjs";
 
 const app = express();
 
 app.use(bodyParser.json());
 
 const events = [];
+
+const users = [];
 
 app.use(
   "/api",
@@ -21,6 +25,7 @@ app.use(
             description:  String!
             price: Float!
             date: String!
+            creator: User!
         }
 
         input EventInput {
@@ -30,12 +35,26 @@ app.use(
             date: String
         }
 
+        type User {
+          _id: ID!,
+          email: String!,
+          password: String,
+          createdEvents:[Event!]
+        }
+
+        input UserInput {
+          email: String!,
+          password: String!
+        }
+
         type RootQuery {
             events: [Event!]!
+            users: [User]!
         }
 
         type RootMutation {
             createEvent(eventInput: EventInput): Event
+            createUser(userInput: UserInput): User
         }
 
         schema {
@@ -46,8 +65,9 @@ app.use(
     rootValue: {
       events: async () => {
         try {
-          const events = await Event.find();
-          return events.map(async (event) => await event._doc);
+          const events = await Event.find().populate("creator");
+
+          return events.map((event) => event);
         } catch (error) {
           throw error;
         }
@@ -60,13 +80,61 @@ app.use(
           description: args.eventInput.description,
           price: +args.eventInput.price,
           date: new Date(args.eventInput.date).toISOString(),
+          creator: "653d0b577479591683a09581",
         });
 
         try {
-          const result_2 = await event.save();
-          return { ...result_2._doc };
+          const user = await User.findById("653d0b577479591683a09581");
+
+          if (!user) {
+            return new Error("User does not exist");
+          }
+
+          user.createdEvents.push(event);
+          await user.save();
+
+          const result = await event.save();
+
+          return { ...result._doc };
         } catch (err) {
           throw err;
+        }
+      },
+
+      createUser: async (args) => {
+        try {
+          const { email, password } = args.userInput;
+
+          const existingUser = await User.findOne({ email });
+
+          if (existingUser) {
+            return new Error("Email is already in use");
+          }
+
+          const hashedPassword = await bcrypt.hash(password, 12);
+
+          const user = new User({
+            email: args.userInput.email,
+            password: hashedPassword,
+          });
+
+          const savedUser = await user.save();
+
+          return { ...savedUser._doc, password: null };
+        } catch (error) {
+          throw error;
+        }
+      },
+
+      users: async () => {
+        try {
+          const users = await User.find().populate("createdEvents");
+
+          return users.map((user) => {
+            return { ...user._doc };
+          });
+        } catch (error) {
+          throw error;
         }
       },
     },
@@ -83,6 +151,5 @@ mongoose
     app.listen(3000);
   })
   .catch((err) => {
-    console.log(err);
-    console.log("--------->>>>>>>", connectionString);
+    throw err;
   });
