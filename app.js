@@ -2,21 +2,40 @@ import express from "express";
 import bodyParser from "body-parser";
 import { graphqlHTTP } from "express-graphql";
 import { buildSchema } from "graphql";
+import mongoose from "mongoose";
+import Event from "./models/event.js";
 
 const app = express();
 
 app.use(bodyParser.json());
 
+const events = [];
+
 app.use(
   "/api",
   graphqlHTTP({
     schema: buildSchema(`
+        type Event {
+            _id: ID!
+            title: String!
+            description:  String!
+            price: Float!
+            date: String!
+        }
+
+        input EventInput {
+            title: String!
+            description:  String!
+            price: Float!
+            date: String
+        }
+
         type RootQuery {
-            events: [String!]!
+            events: [Event!]!
         }
 
         type RootMutation {
-            createEvent(name: String): String
+            createEvent(eventInput: EventInput): Event
         }
 
         schema {
@@ -25,18 +44,45 @@ app.use(
         }
     `),
     rootValue: {
-      events: () => {
-        return ["Romantic Cooking", "Sailing", "All-Night Coding"];
+      events: async () => {
+        try {
+          const events = await Event.find();
+          return events.map(async (event) => await event._doc);
+        } catch (error) {
+          throw error;
+        }
       },
 
-      createEvent: (args) => {
-        const eventName = args.name;
+      createEvent: async (args) => {
+        const event = new Event({
+          title: args.eventInput.title,
+          title: args.eventInput.title,
+          description: args.eventInput.description,
+          price: +args.eventInput.price,
+          date: new Date(args.eventInput.date).toISOString(),
+        });
 
-        return eventName;
+        try {
+          const result_2 = await event.save();
+          return { ...result_2._doc };
+        } catch (err) {
+          throw err;
+        }
       },
     },
     graphiql: true,
   })
 );
 
-app.listen(3000);
+const connectionString = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@event-booking-cluster.dsxfpdb.mongodb.net/${process.env.MONGO_DB}`;
+
+mongoose
+  .connect(connectionString)
+  .then(() => {
+    console.log("App is running on 3000");
+    app.listen(3000);
+  })
+  .catch((err) => {
+    console.log(err);
+    console.log("--------->>>>>>>", connectionString);
+  });
