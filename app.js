@@ -117,18 +117,18 @@ app.use(
         });
 
         try {
-          const user = await User.findById("653d0b577479591683a09581");
+          const exisitingUser = await User.findById("653d0b577479591683a09581");
 
-          if (!user) {
+          if (!exisitingUser) {
             return new Error("User does not exist");
           }
 
-          user.createdEvents.push(event);
-          await user.save();
+          exisitingUser.createdEvents.push(event);
+          await exisitingUser.save();
 
           const result = await event.save();
 
-          return { ...result._doc };
+          return { ...result._doc, creator: exisitingUser };
         } catch (err) {
           throw err;
         }
