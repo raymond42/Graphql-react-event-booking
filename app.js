@@ -11,9 +11,34 @@ const app = express();
 
 app.use(bodyParser.json());
 
-const events = [];
+const events = async (eventIds) => {
+  try {
+    const eventsfound = await Event.find({ _id: { $in: eventIds } });
+    return eventsfound.map(async (evnt) => {
+      return {
+        ...evnt._doc,
+        _id: evnt.id,
+        creator: user(evnt.creator._id),
+      };
+    });
+  } catch (error) {
+    throw error;
+  }
+};
 
-const users = [];
+const user = async (userId) => {
+  try {
+    const oneUser = await User.findById(userId);
+    const returnUser = {
+      ...oneUser._doc,
+      _id: oneUser._id.toString(),
+      createdEvents: events(oneUser.createdEvents),
+    };
+    return returnUser;
+  } catch (error) {
+    throw error;
+  }
+};
 
 app.use(
   "/api",
@@ -65,9 +90,17 @@ app.use(
     rootValue: {
       events: async () => {
         try {
-          const events = await Event.find().populate("creator");
+          const events = await Event.find();
 
-          return events.map((event) => event);
+          return events.map(async (event) => {
+            const result = await {
+              ...event._doc,
+              _id: event._id.toString(),
+              creator: user(event.creator._id.toString()),
+            };
+
+            return result;
+          });
         } catch (error) {
           throw error;
         }
@@ -128,11 +161,19 @@ app.use(
 
       users: async () => {
         try {
-          const users = await User.find().populate("createdEvents");
+          const users = await User.find();
 
-          return users.map((user) => {
-            return { ...user._doc };
+          const foundUsers = users.map(async (oneuser) => {
+            const result = await user(oneuser._id.toString());
+
+            return {
+              ...result,
+              _id: oneuser.id.toString(),
+              createdEvents: events(oneuser.createdEvents),
+            };
           });
+
+          return users.length > 0 ? foundUsers : users;
         } catch (error) {
           throw error;
         }
@@ -147,8 +188,7 @@ const connectionString = `mongodb+srv://${process.env.MONGO_USER}:${process.env.
 mongoose
   .connect(connectionString)
   .then(() => {
-    console.log("App is running on 3000");
-    app.listen(3000);
+    app.listen(3000, () => console.log("Server is running on 3000"));
   })
   .catch((err) => {
     throw err;
