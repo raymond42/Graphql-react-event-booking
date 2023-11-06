@@ -24,6 +24,12 @@ type User {
   createdEvents:[Event!]
 }
 
+type Authdata {
+  _id: ID!
+  email: String!
+  token: String!
+}
+
 input UserInput {
   email: String!,
   password: String!
@@ -49,6 +55,7 @@ type RootMutation {
     createUser(userInput: UserInput): User
     bookEvent(eventId: ID!): Booking!
     cancelBooking(bookingId: ID!): Booking!
+    login(email: String!, password: String!): Authdata!
 }
 
 schema {

@@ -1,6 +1,9 @@
+import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import User from "../../models/user.js";
 import { user, events } from "./utils.js";
+
+const { hash, compare } = bcrypt;
 
 const createUser = async (args) => {
   try {
@@ -12,7 +15,7 @@ const createUser = async (args) => {
       return new Error("Email is already in use");
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await hash(password, 12);
 
     const user = new User({
       email: args.userInput.email,
@@ -25,6 +28,34 @@ const createUser = async (args) => {
   } catch (error) {
     throw error;
   }
+};
+
+const login = async ({ email, password }) => {
+  const foundUser = await User.findOne({ email });
+
+  if (!foundUser) {
+    throw new Error("Incorrect email or password");
+  }
+
+  const comparePasswords = await compare(password, foundUser.password);
+
+  if (!comparePasswords) {
+    throw new Error("Incorrect email or password");
+  }
+
+  const token = jwt.sign(
+    { userId: foundUser.id, email: foundUser.email },
+    "thisisascretkey",
+    {
+      expiresIn: "1h",
+    }
+  );
+
+  return {
+    _id: foundUser.id,
+    email: foundUser.email,
+    token,
+  };
 };
 
 const users = async () => {
@@ -47,4 +78,4 @@ const users = async () => {
   }
 };
 
-export { createUser, users };
+export { createUser, users, login };

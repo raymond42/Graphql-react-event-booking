@@ -4,7 +4,7 @@ import {
   bookings,
   cancelBooking,
 } from "../../graphql/resolvers/booking.js";
-import { users, createUser } from "./user.js";
+import { users, createUser, login } from "./auth.js";
 
 const resolvers = {
   // events
@@ -14,6 +14,7 @@ const resolvers = {
   // users
   createUser,
   users,
+  login,
 
   // bookings
   bookings,
