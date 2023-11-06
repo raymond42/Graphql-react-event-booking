@@ -3,7 +3,7 @@ import User from "../../models/user.js";
 import Booking from "../../models/booking.js";
 import { dateToString } from "../../helpers/date.js";
 
-export const transformEvent = (event) => {
+const transformEvent = (event) => {
   return {
     ...event._doc,
     _id: event._id.toString(),
@@ -12,7 +12,7 @@ export const transformEvent = (event) => {
   };
 };
 
-export const transformBooking = (booking) => {
+const transformBooking = (booking) => {
   return {
     ...booking._doc,
     _id: booking._id,
@@ -23,7 +23,7 @@ export const transformBooking = (booking) => {
   };
 };
 
-export const events = async (eventIds) => {
+const events = async (eventIds) => {
   try {
     const eventsfound = await Event.find({ _id: { $in: eventIds } });
     return eventsfound.map(async (evnt) => {
@@ -34,7 +34,7 @@ export const events = async (eventIds) => {
   }
 };
 
-export const event = async (eventId) => {
+const event = async (eventId) => {
   try {
     const fetchedEvent = await Event.findById(eventId);
 
@@ -48,7 +48,7 @@ export const event = async (eventId) => {
   }
 };
 
-export const user = async (userId) => {
+const user = async (userId) => {
   try {
     const oneUser = await User.findById(userId);
 
@@ -67,7 +67,7 @@ export const user = async (userId) => {
   }
 };
 
-export const booking = async (bookingId) => {
+const booking = async (bookingId) => {
   const fetchedBooking = await Booking.findById(bookingId);
 
   if (!fetchedBooking) {
@@ -76,3 +76,5 @@ export const booking = async (bookingId) => {
 
   return fetchedBooking;
 };
+
+export { transformEvent, transformBooking, event, events, user, booking };

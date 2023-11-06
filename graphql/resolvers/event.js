@@ -1,4 +1,6 @@
 import Event from "../../models/event.js";
+import User from "../../models/user.js";
+import { dateToString } from "../../helpers/date.js";
 import { transformEvent } from "./utils.js";
 
 const events = async () => {
@@ -15,13 +17,14 @@ const events = async () => {
   }
 };
 
-const createEvent = async (args) => {
+const createEvent = async ({ eventInput }) => {
+  const { title, description, price, date } = eventInput;
+
   const newEvent = new Event({
-    title: args.eventInput.title,
-    title: args.eventInput.title,
-    description: args.eventInput.description,
-    price: +args.eventInput.price,
-    date: dateToString(args.eventInput.date),
+    title,
+    description,
+    price,
+    date: dateToString(date),
     creator: "653d0b577479591683a09581",
   });
 
