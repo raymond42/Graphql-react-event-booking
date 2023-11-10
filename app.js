@@ -4,10 +4,13 @@ import { graphqlHTTP } from "express-graphql";
 import mongoose from "mongoose";
 import schema from "./graphql/schema/index.js";
 import resolvers from "./graphql/resolvers/index.js";
+import isAuth from "./middleware/is-auth.js";
 
 const app = express();
 
 app.use(bodyParser.json());
+
+app.use(isAuth);
 
 app.use(
   "/api",
