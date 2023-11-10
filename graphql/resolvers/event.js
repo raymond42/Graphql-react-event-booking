@@ -17,7 +17,10 @@ const events = async () => {
   }
 };
 
-const createEvent = async ({ eventInput }) => {
+const createEvent = async ({ eventInput }, req) => {
+  if (!req.isAuth) {
+    throw new Error("Unauthenticated!");
+  }
   const { title, description, price, date } = eventInput;
 
   const newEvent = new Event({

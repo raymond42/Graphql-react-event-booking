@@ -31,31 +31,35 @@ const createUser = async (args) => {
 };
 
 const login = async ({ email, password }) => {
-  const foundUser = await User.findOne({ email });
+  try {
+    const foundUser = await User.findOne({ email });
 
-  if (!foundUser) {
-    throw new Error("Incorrect email or password");
-  }
-
-  const comparePasswords = await compare(password, foundUser.password);
-
-  if (!comparePasswords) {
-    throw new Error("Incorrect email or password");
-  }
-
-  const token = jwt.sign(
-    { userId: foundUser.id, email: foundUser.email },
-    "thisisascretkey",
-    {
-      expiresIn: "1h",
+    if (!foundUser) {
+      throw new Error("Incorrect email or password");
     }
-  );
 
-  return {
-    _id: foundUser.id,
-    email: foundUser.email,
-    token,
-  };
+    const comparePasswords = await compare(password, foundUser.password);
+
+    if (!comparePasswords) {
+      throw new Error("Incorrect email or password");
+    }
+
+    const token = jwt.sign(
+      { userId: foundUser.id, email: foundUser.email },
+      "thisisascretkey",
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    return {
+      _id: foundUser.id,
+      email: foundUser.email,
+      token,
+    };
+  } catch (error) {
+    throw error;
+  }
 };
 
 const users = async () => {

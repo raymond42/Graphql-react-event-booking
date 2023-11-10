@@ -4,7 +4,11 @@ import { booking, event, transformBooking } from "./utils.js";
 
 const creatorId = "653d0b577479591683a09581";
 
-const bookEvent = async ({ eventId }) => {
+const bookEvent = async ({ eventId }, req) => {
+  if (!req.auth) {
+    throw new Error("Unauthenticated!");
+  }
+
   try {
     const fetchedEvent = await Event.findById(eventId);
     if (!fetchedEvent) {
@@ -40,6 +44,10 @@ const bookings = async () => {
 };
 
 const cancelBooking = async ({ bookingId }) => {
+  if (!req.auth) {
+    throw new Error("Unauthenticated!");
+  }
+
   try {
     const fetchBooking = await booking(bookingId);
 
